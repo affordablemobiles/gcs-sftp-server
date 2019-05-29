@@ -4,6 +4,7 @@ ADD . /go/src/github.com/a1comms/gcs-sftp-server
 WORKDIR /go/src/github.com/a1comms/gcs-sftp-server
 
 ARG GO111MODULE=on
+ARG CGO_ENABLED=0
 
 RUN go mod vendor
 RUN go build -ldflags "-s -w" -o /go/bin/app
