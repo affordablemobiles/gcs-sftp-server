@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
@@ -15,12 +16,13 @@ import (
 )
 
 var (
-	SFTP_USERNAME        string = mustGetenv("SFTP_USERNAME")
-	SFTP_PASSWORD        string = mustGetenv("SFTP_PASSWORD")
-	SFTP_PORT            string = mustGetenv("SFTP_PORT")
-	SFTP_SERVER_KEY_PATH string = mustGetenv("SFTP_SERVER_KEY_PATH")
-	GCS_CREDENTIALS_FILE string = mustGetenv("GCS_CREDENTIALS_FILE")
-	GCS_BUCKET           string = mustGetenv("GCS_BUCKET")
+	SFTP_USERNAME             string = mustGetenv("SFTP_USERNAME")
+	SFTP_PASSWORD             string = mustGetenv("SFTP_PASSWORD")
+	SFTP_PORT                 string = mustGetenv("SFTP_PORT")
+	SFTP_SERVER_KEY_PATH      string = mustGetenv("SFTP_SERVER_KEY_PATH")
+	SFTP_AUTHORIZED_KEYS_FILE string = os.Getenv("SFTP_AUTHORIZED_KEYS_FILE")
+	GCS_CREDENTIALS_FILE      string = mustGetenv("GCS_CREDENTIALS_FILE")
+	GCS_BUCKET                string = mustGetenv("GCS_BUCKET")
 )
 
 func main() {
@@ -54,6 +56,8 @@ func main() {
 		log.Fatalf("Failed to parse private key: %s", err)
 	}
 
+	processPublicKeyAuth(config)
+
 	config.AddHostKey(private)
 
 	// Once a ServerConfig has been configured, connections can be
@@ -78,7 +82,8 @@ func HandleConn(nConn net.Conn, config *ssh.ServerConfig) {
 	// Before use, a handshake must be performed on the incoming net.Conn.
 	sconn, chans, reqs, err := ssh.NewServerConn(nConn, config)
 	if err != nil {
-		log.Fatalf("failed to handshake: %s", err)
+		log.Printf("failed to handshake: %s", err)
+		return
 	}
 	log.Printf("login detected: %s", sconn.User())
 
@@ -96,7 +101,8 @@ func HandleConn(nConn net.Conn, config *ssh.ServerConfig) {
 		}
 		channel, requests, err := newChannel.Accept()
 		if err != nil {
-			log.Fatalf("could not accept channel: %s", err)
+			log.Printf("could not accept channel: %s", err)
+			return
 		}
 
 		// Sessions have out-of-band requests such as "shell",
