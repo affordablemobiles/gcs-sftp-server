@@ -23,7 +23,7 @@ var (
 	SFTP_PORT                 string = mustGetenv("SFTP_PORT")
 	SFTP_SERVER_KEY_PATH      string = mustGetenv("SFTP_SERVER_KEY_PATH")
 	SFTP_AUTHORIZED_KEYS_FILE string = os.Getenv("SFTP_AUTHORIZED_KEYS_FILE")
-	GCS_CREDENTIALS_FILE      string = mustGetenv("GCS_CREDENTIALS_FILE")
+	GCS_CREDENTIALS_FILE      string = os.Getenv("GCS_CREDENTIALS_FILE")
 	GCS_BUCKET                string = mustGetenv("GCS_BUCKET")
 )
 
