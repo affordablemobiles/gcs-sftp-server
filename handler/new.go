@@ -9,8 +9,8 @@ import (
 	"google.golang.org/api/option"
 )
 
-func GoogleCloudStorageHandler(ctx context.Context, credentialsFile string, bucketName string) (*sftp.Handlers, error) {
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialsFile))
+func GoogleCloudStorageHandler(ctx context.Context, bucketName string, opts ...option.ClientOption) (*sftp.Handlers, error) {
+	client, err := storage.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("Storage Client Error: %s", err)
 	}
