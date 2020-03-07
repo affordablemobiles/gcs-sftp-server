@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 
+	_ "github.com/GoogleCloudPlatform/berglas/pkg/auto"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 
