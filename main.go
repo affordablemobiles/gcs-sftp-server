@@ -9,8 +9,10 @@ import (
 	"net"
 	"os"
 
+	_ "github.com/GoogleCloudPlatform/berglas/pkg/auto"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
+	"google.golang.org/api/option"
 
 	gsftp "github.com/a1comms/gcs-sftp-server/handler"
 )
@@ -21,7 +23,7 @@ var (
 	SFTP_PORT                 string = mustGetenv("SFTP_PORT")
 	SFTP_SERVER_KEY_PATH      string = mustGetenv("SFTP_SERVER_KEY_PATH")
 	SFTP_AUTHORIZED_KEYS_FILE string = os.Getenv("SFTP_AUTHORIZED_KEYS_FILE")
-	GCS_CREDENTIALS_FILE      string = mustGetenv("GCS_CREDENTIALS_FILE")
+	GCS_CREDENTIALS_FILE      string = os.Getenv("GCS_CREDENTIALS_FILE")
 	GCS_BUCKET                string = mustGetenv("GCS_BUCKET")
 )
 
@@ -122,7 +124,13 @@ func HandleConn(nConn net.Conn, config *ssh.ServerConfig) {
 		}(requests)
 
 		ctx := context.Background()
-		root, err := gsftp.GoogleCloudStorageHandler(ctx, GCS_CREDENTIALS_FILE, GCS_BUCKET)
+
+		opts := []option.ClientOption{}
+		if GCS_CREDENTIALS_FILE != "" {
+			opts = append(opts, option.WithCredentialsFile(GCS_CREDENTIALS_FILE))
+		}
+
+		root, err := gsftp.GoogleCloudStorageHandler(ctx, GCS_BUCKET, opts...)
 		if err != nil {
 			log.Fatalf("GCS Init Failed: %s", err)
 		}

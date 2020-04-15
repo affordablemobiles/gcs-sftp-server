@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.39.0
+	github.com/GoogleCloudPlatform/berglas v0.5.1
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/pkg/sftp v1.10.0
