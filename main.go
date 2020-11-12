@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	SFTP_USERNAME             string = mustGetenv("SFTP_USERNAME")
-	SFTP_PASSWORD             string = mustGetenv("SFTP_PASSWORD")
+	SFTP_USERNAME             string = os.Getenv("SFTP_USERNAME")
+	SFTP_PASSWORD             string = os.Getenv("SFTP_PASSWORD")
 	SFTP_PORT                 string = mustGetenv("SFTP_PORT")
 	SFTP_SERVER_KEY_PATH      string = mustGetenv("SFTP_SERVER_KEY_PATH")
 	SFTP_AUTHORIZED_KEYS_FILE string = os.Getenv("SFTP_AUTHORIZED_KEYS_FILE")
@@ -40,12 +40,6 @@ func main() {
 				log.Printf("Accepted %s for user %s from %s ssh2", method, conn.User(), conn.RemoteAddr())
 			}
 		},
-		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
-			if c.User() == SFTP_USERNAME && string(pass) == SFTP_PASSWORD {
-				return nil, nil
-			}
-			return nil, fmt.Errorf("password rejected for %q", c.User())
-		},
 	}
 
 	privateBytes, err := ioutil.ReadFile(SFTP_SERVER_KEY_PATH)
@@ -56,6 +50,15 @@ func main() {
 	private, err := ssh.ParsePrivateKey(privateBytes)
 	if err != nil {
 		log.Fatalf("Failed to parse private key: %s", err)
+	}
+
+	if SFTP_USERNAME != "" && SFTP_PASSWORD != "" {
+		config.PasswordCallback = func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
+			if c.User() == SFTP_USERNAME && string(pass) == SFTP_PASSWORD {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("password rejected for %q", c.User())
+		}
 	}
 
 	processPublicKeyAuth(config)
