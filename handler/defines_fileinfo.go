@@ -14,7 +14,7 @@ type SyntheticFileInfo struct {
 
 func (f *SyntheticFileInfo) Name() string { // base name of the file
 	if f.objAttr.Name == "/" || f.objAttr.Name == "" {
-		return ""
+		return "/"
 	}
 	
 	if !f.IsDir() {
