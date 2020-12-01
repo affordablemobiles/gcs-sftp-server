@@ -13,10 +13,10 @@ type SyntheticFileInfo struct {
 }
 
 func (f *SyntheticFileInfo) Name() string { // base name of the file
-	if f.objAttr.Prefix == "" {
+	if !f.IsDir() {
 		return f.objAttr.Name[len(f.prefix):]
 	} else {
-		return f.objAttr.Prefix[len(f.prefix) : len(f.objAttr.Prefix)-1]
+		return f.objAttr.Name[len(f.prefix) : len(f.objAttr.Name)-1]
 	}
 }
 
@@ -25,7 +25,7 @@ func (f *SyntheticFileInfo) Size() int64 { // length in bytes for regular files;
 }
 
 func (f *SyntheticFileInfo) Mode() os.FileMode { // file mode bits
-	if f.objAttr.Prefix == "" {
+	if !f.IsDir() {
 		return 0777
 	} else {
 		return os.ModeDir | 0777
@@ -33,7 +33,7 @@ func (f *SyntheticFileInfo) Mode() os.FileMode { // file mode bits
 }
 
 func (f *SyntheticFileInfo) ModTime() time.Time { // modification time
-	if f.objAttr.Prefix == "" {
+	if !f.IsDir() {
 		return f.objAttr.Updated
 	} else {
 		return time.Now()
@@ -41,7 +41,13 @@ func (f *SyntheticFileInfo) ModTime() time.Time { // modification time
 }
 
 func (f *SyntheticFileInfo) IsDir() bool { // abbreviation for Mode().IsDir()
-	return f.objAttr.Prefix == ""
+	if f.objAttr.Name[len(f.objAttr.Name)-1:] == "/" {
+		if f.objAttr.Size == 0 {
+			return true
+		}
+	}
+	
+	return false
 }
 
 func (f *SyntheticFileInfo) Sys() interface{} { // underlying data source (can return nil)
