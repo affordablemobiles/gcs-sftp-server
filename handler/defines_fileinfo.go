@@ -13,10 +13,6 @@ type SyntheticFileInfo struct {
 }
 
 func (f *SyntheticFileInfo) Name() string { // base name of the file
-	if f.objAttr.Name == "/" || f.objAttr.Name == "" {
-		return "/"
-	}
-	
 	if !f.IsDir() {
 		return f.objAttr.Name[len(f.prefix):]
 	} else {
@@ -45,10 +41,6 @@ func (f *SyntheticFileInfo) ModTime() time.Time { // modification time
 }
 
 func (f *SyntheticFileInfo) IsDir() bool { // abbreviation for Mode().IsDir()
-	if f.objAttr.Name == "/" || f.objAttr.Name == "" {
-		return true
-	}
-	
 	if f.objAttr.Name[len(f.objAttr.Name)-1:] == "/" {
 		if f.objAttr.Size == 0 {
 			return true
