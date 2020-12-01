@@ -87,7 +87,7 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 			}
 
 			// Don't include self.
-			if ((prefix != "") && (objAttrs.Prefix == prefix)) || ((objAttrs.Prefix == "") && (objAttrs.Name == prefix)) {
+			if objAttrs.Name == prefix {
 				continue
 			}
 
@@ -103,7 +103,8 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 			return listerat([]os.FileInfo{
 				&SyntheticFileInfo{
 					objAttr: &storage.ObjectAttrs{
-						Prefix: "/",
+						Name: "/",
+						Size: 0,
 					},
 				},
 			}), nil
