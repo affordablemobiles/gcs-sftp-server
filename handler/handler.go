@@ -122,6 +122,7 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 			attrs, err = object.Attrs(r.Context())
 		}
 		if err != nil {
+			log.Printf("Failed to get file info for %s: %s", r.Filepath, err)
 			return nil, err
 		}
 
