@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"cloud.google.com/go/storage"
 	"github.com/pkg/sftp"
@@ -25,7 +26,40 @@ func (fs *gcsHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 	return NewReadAtBuffer(reader)
 }
 
+func (fs *gcsHandler) createDirectoryTree(r *sftp.Request) error {
+	dirTree := getDirectoryTree(r.Filepath[1:])
+
+	for _, dir := range dirTree {
+		dir = dir + "/"
+
+		object := fs.bucket.Object(dir)
+
+		log.Printf("Checking directory exists for write: /%s", dir)
+
+		_, err := object.Attrs(r.Context())
+
+		if err == storage.ErrObjectNotExist {
+			log.Printf("Creating directory for write: /%s", dir)
+
+			writer := object.NewWriter(r.Context())
+
+			err := writer.Close()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (fs *gcsHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
+	err := fs.createDirectoryTree(r)
+	if err != nil {
+		log.Printf("Failed to create directory tree: %s", err)
+		return nil, err
+	}
+
 	object := fs.bucket.Object(r.Filepath[1:])
 
 	log.Printf("Writing file %s", r.Filepath)
@@ -134,4 +168,19 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		return nil, fmt.Errorf("not implemented")
 	}
 	return nil, nil
+}
+
+func getDirectoryTree(dir string) []string {
+	dirsToCreate := []string{}
+
+	for {
+		dir, _ = filepath.Split(dir)
+		if dir == "" {
+			break
+		}
+		dir = filepath.Dir(dir)
+		dirsToCreate = append([]string{dir}, dirsToCreate...)
+	}
+
+	return dirsToCreate
 }
