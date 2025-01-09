@@ -157,6 +157,9 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		}
 		if err != nil {
 			log.Printf("Failed to get file info for %s: %s", r.Filepath, err)
+			if err == storage.ErrObjectNotExist {
+				err = os.ErrNotExist
+			}
 			return nil, err
 		}
 
