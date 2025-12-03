@@ -2,8 +2,11 @@ package gsftp
 
 import (
 	"io"
+	"os"
 	"sync"
 )
+
+// --- Memory Buffer (Default) ---
 
 type WriteAtBuffer struct {
 	buf []byte
@@ -66,5 +69,60 @@ func (b *WriteAtBuffer) Close() error {
 		return err
 	}
 
+	return b.Writer.Close()
+}
+
+// --- Disk Buffer (Optional) ---
+
+type DiskWriteAtBuffer struct {
+	file   *os.File
+	path   string
+	Writer io.WriteCloser
+}
+
+func NewDiskWriteAtBuffer(w io.WriteCloser, tempDir string) (*DiskWriteAtBuffer, error) {
+	f, err := os.CreateTemp(tempDir, "sftp-upload-*")
+	if err != nil {
+		return nil, err
+	}
+
+	return &DiskWriteAtBuffer{
+		file:   f,
+		path:   f.Name(),
+		Writer: w,
+	}, nil
+}
+
+func (b *DiskWriteAtBuffer) WriteAt(p []byte, pos int64) (n int, err error) {
+	return b.file.WriteAt(p, pos)
+}
+
+func (b *DiskWriteAtBuffer) Close() error {
+	defer os.Remove(b.path) // Ensure temp file is cleaned up
+
+	// Ensure all writes are flushed to disk
+	if err := b.file.Sync(); err != nil {
+		b.file.Close()
+		return err
+	}
+
+	// Rewind to the beginning
+	if _, err := b.file.Seek(0, 0); err != nil {
+		b.file.Close()
+		return err
+	}
+
+	// Stream from disk to GCS
+	if _, err := io.Copy(b.Writer, b.file); err != nil {
+		b.file.Close()
+		return err
+	}
+
+	// Close the local file
+	if err := b.file.Close(); err != nil {
+		return err
+	}
+
+	// Close the GCS writer to finalize the upload
 	return b.Writer.Close()
 }

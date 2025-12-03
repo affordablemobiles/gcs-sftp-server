@@ -1,4 +1,4 @@
-FROM golang:1.24 as build-env
+FROM golang:1.25 as build-env
 
 ADD . /go/src/github.com/a1comms/gcs-sftp-server
 WORKDIR /go/src/github.com/a1comms/gcs-sftp-server

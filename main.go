@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -25,6 +24,7 @@ var (
 	SFTP_AUTHORIZED_KEYS_FILE string = os.Getenv("SFTP_AUTHORIZED_KEYS_FILE")
 	GCS_CREDENTIALS_FILE      string = os.Getenv("GCS_CREDENTIALS_FILE")
 	GCS_BUCKET                string = mustGetenv("GCS_BUCKET")
+	SFTP_TEMP_DIR             string = os.Getenv("SFTP_TEMP_DIR")
 )
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 		},
 	}
 
-	privateBytes, err := ioutil.ReadFile(SFTP_SERVER_KEY_PATH)
+	privateBytes, err := os.ReadFile(SFTP_SERVER_KEY_PATH)
 	if err != nil {
 		log.Fatalf("Failed to load private key: %s", err)
 	}
@@ -133,7 +133,7 @@ func HandleConn(nConn net.Conn, config *ssh.ServerConfig) {
 			opts = append(opts, option.WithCredentialsFile(GCS_CREDENTIALS_FILE))
 		}
 
-		root, err := gsftp.GoogleCloudStorageHandler(ctx, GCS_BUCKET, opts...)
+		root, err := gsftp.GoogleCloudStorageHandler(ctx, GCS_BUCKET, SFTP_TEMP_DIR, opts...)
 		if err != nil {
 			log.Fatalf("GCS Init Failed: %s", err)
 		}

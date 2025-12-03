@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -22,7 +21,7 @@ func processPublicKeyAuth(config *ssh.ServerConfig) {
 		return
 	}
 
-	authorizedKeysBytes, err := ioutil.ReadFile(SFTP_AUTHORIZED_KEYS_FILE)
+	authorizedKeysBytes, err := os.ReadFile(SFTP_AUTHORIZED_KEYS_FILE)
 	if err != nil {
 		log.Fatalf("Failed to load authorized keys file: %s", err)
 	}

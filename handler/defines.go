@@ -8,8 +8,9 @@ import (
 )
 
 type gcsHandler struct {
-	client *storage.Client
-	bucket *storage.BucketHandle
+	client  *storage.Client
+	bucket  *storage.BucketHandle
+	tempDir string
 }
 
 type listerat []os.FileInfo

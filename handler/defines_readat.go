@@ -3,11 +3,10 @@ package gsftp
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 )
 
 func NewReadAtBuffer(r io.ReadCloser) (io.ReaderAt, error) {
-	buf, err := ioutil.ReadAll(r)
+	buf, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

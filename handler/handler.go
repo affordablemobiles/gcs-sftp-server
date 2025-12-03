@@ -66,6 +66,12 @@ func (fs *gcsHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 
 	writer := object.NewWriter(r.Context())
 
+	// Use Disk Buffer if tempDir is configured, otherwise default to Memory
+	if fs.tempDir != "" {
+		log.Printf("Using disk buffer for upload in: %s", fs.tempDir)
+		return NewDiskWriteAtBuffer(writer, fs.tempDir)
+	}
+
 	return NewWriteAtBuffer(writer, []byte{}), nil
 }
 
@@ -74,9 +80,35 @@ func (fs *gcsHandler) Filecmd(r *sftp.Request) error {
 	case "Setstat":
 		return nil
 	case "Rename":
-		return fmt.Errorf("not implemented")
+		// GCS does not support atomic rename, so we must Copy then Delete.
+		srcPath := r.Filepath[1:]
+		dstPath := r.Target[1:]
+
+		log.Printf("Renaming file from %s to %s", srcPath, dstPath)
+
+		src := fs.bucket.Object(srcPath)
+		dst := fs.bucket.Object(dstPath)
+
+		// 1. Copy
+		if _, err := dst.CopierFrom(src).Run(r.Context()); err != nil {
+			return fmt.Errorf("failed to copy object for rename: %w", err)
+		}
+
+		// 2. Delete Original
+		if err := src.Delete(r.Context()); err != nil {
+			return fmt.Errorf("failed to delete source object after rename: %w", err)
+		}
+
+		return nil
 	case "Rmdir", "Remove":
-		return fmt.Errorf("not implemented")
+		path := r.Filepath[1:]
+		log.Printf("Removing file/directory %s", path)
+
+		object := fs.bucket.Object(path)
+		if err := object.Delete(r.Context()); err != nil {
+			return fmt.Errorf("failed to remove object: %w", err)
+		}
+		return nil
 	case "Mkdir":
 		object := fs.bucket.Object(r.Filepath[1:] + "/")
 
