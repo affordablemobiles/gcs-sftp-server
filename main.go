@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -139,7 +140,7 @@ func HandleConn(nConn net.Conn, config *ssh.ServerConfig) {
 		}
 
 		server := sftp.NewRequestServer(channel, *root)
-		if err := server.Serve(); err == io.EOF {
+		if err := server.Serve(); errors.Is(err, io.EOF) {
 			server.Close()
 
 			log.Printf("sftp client exited session.")

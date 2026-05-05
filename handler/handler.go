@@ -1,6 +1,7 @@
 package gsftp
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -38,7 +39,7 @@ func (fs *gcsHandler) createDirectoryTree(r *sftp.Request) error {
 
 		_, err := object.Attrs(r.Context())
 
-		if err == storage.ErrObjectNotExist {
+		if errors.Is(err, storage.ErrObjectNotExist) {
 			log.Printf("Creating directory for write: /%s", dir)
 
 			writer := object.NewWriter(r.Context())
@@ -143,7 +144,7 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 
 		for {
 			objAttrs, err := objects.Next()
-			if err == iterator.Done {
+			if errors.Is(err, iterator.Done) {
 				break
 			}
 			if err != nil {
@@ -180,7 +181,7 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		log.Printf("Getting file info for %s", r.Filepath)
 
 		attrs, err := object.Attrs(r.Context())
-		if err == storage.ErrObjectNotExist {
+		if errors.Is(err, storage.ErrObjectNotExist) {
 			object := fs.bucket.Object(r.Filepath[1:] + "/")
 
 			log.Printf("Retrying file info for %s", r.Filepath+"/")
@@ -189,7 +190,7 @@ func (fs *gcsHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		}
 		if err != nil {
 			log.Printf("Failed to get file info for %s: %s", r.Filepath, err)
-			if err == storage.ErrObjectNotExist {
+			if errors.Is(err, storage.ErrObjectNotExist) {
 				err = os.ErrNotExist
 			}
 			return nil, err
